@@ -1,80 +1,82 @@
-int ledPin = 0;
-int fadeDirection = 1;
-int brightness = 0;
-int minBrightness = 0;
-int maxBrightness = 255;
-
-const int period = 2000; // in ms
-unsigned long previousTime = 0;        // will store last time LED was updated
-unsigned long currentTime = 0;
-
-int fadeStep = period/(maxBrightness*2);
+float fadeSteps = 150; // How many steps to take until full brightness
 
 class Led{
   public:
-    Led(int pin, int brightness=0);
+    Led(int pin, float fadeStep=0);
     void setup();
-    void updateFadeDirection();
+    // void updateFadeDirection();
     void updateBrightness();
 
   private:
     int _pin;
-    int _fadeDirection;
-    int _brightness;
-    int _minBrightness;
-    int _maxBrightness;
+    unsigned long _currentTime;
+    unsigned long _startTime; // Very beginning of fade period 
+    unsigned long _fadePeriod; // How long to fade on and off
+    float _fadeStep; // current fade step i.e. 1/255
+    int _fadeDirection; // low to high or high to low?
+    unsigned long _T_on; // Amount of time to turn LED on
+    unsigned long _T_fadeStep; // Amount of time per step increment of brightness
+    unsigned long _stepTime; // Start of current step period
+
+    bool _evaluated;
 };
 
-Led::Led(int pin, int brightness){
+Led::Led(int pin, float fadeStep){
   _pin = pin;
-  _brightness = brightness;
+  _fadeStep = fadeStep;
 }
 
 void Led::setup(){
   pinMode(_pin, OUTPUT);
+  _startTime = micros();
+  _fadePeriod = 2000000; //microseconds(us)
   _fadeDirection = 1;
-  _minBrightness = 0;
-  _maxBrightness = 255;
-}
 
-void Led::updateFadeDirection(){
-  if (_brightness <= minBrightness) {
-    _fadeDirection = 1;
-    _brightness = 0;
-  }
-  else if (_brightness >= maxBrightness) {
-    _fadeDirection = -1;
-    _brightness = 255;
-  }
+  _T_fadeStep = _fadePeriod/2/fadeSteps; // i.e. 2000000us/100steps = 20000us/step of brightness
+  _T_on = (_fadeStep/fadeSteps) * _T_fadeStep; // i.e. 20/100 * 20000us = 4000us on
+  
+  _stepTime = micros();
 }
 
 void Led::updateBrightness(){
-  _brightness += _fadeDirection;
-  analogWrite(_pin, _brightness);
-  updateFadeDirection();
+  _currentTime = micros();
+  if (_currentTime - _stepTime > _T_on){
+    digitalWrite(_pin, LOW);
+  } else {
+    digitalWrite(_pin, HIGH);
+  }
+
+  if(_currentTime - _stepTime >= _T_fadeStep){
+    _fadeStep += _fadeDirection;
+    _stepTime = _currentTime;
+    _T_on = (_fadeStep/fadeSteps) * _T_fadeStep;
+  }
+
+  if(_fadeStep >= fadeSteps-1) {
+    _fadeDirection = -1;
+  } else if(_fadeStep <= 1) {
+    _fadeDirection = 1;
+  }
 }
 
-Led LED0(7);
-Led LED1(11);
-Led LED2(12);
-Led LED3(13);
+Led LED0(0);
+Led LED1(1,fadeSteps/5);
+Led LED2(2,2*fadeSteps/5);
+Led LED3(3,3*fadeSteps/5);
+Led LED4(4,4*fadeSteps/5);
 
 void setup() {
   LED0.setup();
   LED1.setup();
   LED2.setup();
   LED3.setup();
-  currentTime = millis();
+  LED4.setup();
 }
 
 void loop() {
-  currentTime = millis();
-
-  if (currentTime - previousTime >= fadeStep) {
-    LED0.updateBrightness();
-    LED1.updateBrightness();
-    LED2.updateBrightness();
-    LED3.updateBrightness();
-    previousTime = currentTime;
-  }
+  LED0.updateBrightness();
+  LED1.updateBrightness();
+  LED2.updateBrightness();
+  LED3.updateBrightness();
+  LED4.updateBrightness();
 }
