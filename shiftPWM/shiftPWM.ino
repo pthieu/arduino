@@ -13,21 +13,26 @@ void setup(){
 
 
 void loop(){
-  for (int x=0;x<255;x++){
-    spwm(x,led[count],3);
+  for (int x=1;x<255;x++){
+    for (int i=0; i<5; i++){
+      spwm(led[i], x,6);
+      if (count>4){
+        count=0;
+      }
+    }
   }
   for (int x=254;x>0;x--){
-    spwm(x,led[count],3);
-  }
-
-  count++;
-  if (count>4){
-    count=0;
+    for (int i=0; i<5; i++){
+      spwm(led[i],x,6);
+      if (count>4){
+        count=0;
+      }
+    }
   }
 }
 
 
-void spwm(int freq,int spin,int sp){
+void spwm(int spin, int freq,int sp){
   //on
   digitalWrite(spin,HIGH);
   delayMicroseconds(sp*freq);

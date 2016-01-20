@@ -1,4 +1,4 @@
-float fadeSteps = 150; // How many steps to take until full brightness
+float fadeSteps = 120; // How many steps to take until full brightness
 
 class Led{
   public:
@@ -29,8 +29,8 @@ Led::Led(int pin, float fadeStep){
 void Led::setup(){
   pinMode(_pin, OUTPUT);
   _startTime = micros();
-  _fadePeriod = 2000000; //microseconds(us)
   _fadeDirection = 1;
+  _fadePeriod = 2000000*_fadeDirection; //microseconds(us)
 
   _T_fadeStep = _fadePeriod/2/fadeSteps; // i.e. 2000000us/100steps = 20000us/step of brightness
   _T_on = (_fadeStep/fadeSteps) * _T_fadeStep; // i.e. 20/100 * 20000us = 4000us on
@@ -52,7 +52,7 @@ void Led::updateBrightness(){
     _T_on = (_fadeStep/fadeSteps) * _T_fadeStep;
   }
 
-  if(_fadeStep >= fadeSteps-1) {
+  if(_fadeStep >= fadeSteps) {
     _fadeDirection = -1;
   } else if(_fadeStep <= 1) {
     _fadeDirection = 1;
